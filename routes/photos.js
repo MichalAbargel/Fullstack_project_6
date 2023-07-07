@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const db = require('../database/db');
+//בסיס הנתונים  חסר את הנתונים האלה, נחזור לזה בהמשך
 
 const bodyParser = require("body-parser");
 router.use(bodyParser.json());

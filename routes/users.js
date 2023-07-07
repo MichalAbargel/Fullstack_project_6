@@ -1,36 +1,171 @@
 const express = require("express");
 const router = express.Router();
+const db = require('../database/db');
 
 const bodyParser = require("body-parser");
 router.use(bodyParser.json());
 
-//login
-router.get("/:username", async (req, res) => {
-  const response = await fetch(
-    `https://jsonplaceholder.typicode.com/users?username=${req.params.username}`
-  );
-  const data = await response.json();
-  // add login check in the server?
-  res.send(data);
+// GET user by username
+router.get('/:username', (req, res) => {
+  // Retrieve user ID from request parameters
+  const username = req.params.username;
+
+  // Connect to the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error connecting to database:', err);
+      //500 - Internal server error
+      return res.status(500).send('An error occurred');
+    }
+
+    // Prepare and execute the SQL query
+    const query = 'SELECT * FROM users WHERE username = ?';
+    connection.query(query, [username], (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error('Error executing query:', err);
+        //500 - Internal server error
+        return res.status(500).send('An error occurred');
+      } else if (results.length === 0) {
+          //404 - User not found
+        return res.status(404).send('User not found');
+      } else {
+        res.json(results[0]);
+      }
+    });
+  });
 });
 
-// POST user
-router.post("/", (req, res) => {
-  const user = {
-    id: 1, // TODO id from DB
-    name: req.body.name,
-    username: req.body.username,
-    email: req.body.email,
-    address: req.body.address,
-    phone: req.body.phone,
-    website: req.body.website,
-    company: req.body.company,
-  };
+// GET user by id
+router.get('/:id', (req, res) => {
+  // Retrieve user ID from request parameters
+  const userId = req.params.id;
 
-  // check if user alrady exist in DB -> if true return?
-  // add user to DB
+  // Connect to the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error connecting to database:', err);
+      //500 - Internal server error
+      return res.status(500).send('An error occurred');
+    }
 
-  res.send(user);
+    // Prepare and execute the SQL query
+    const query = 'SELECT * FROM users WHERE id = ?';
+    connection.query(query, [userId], (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error('Error executing query:', err);
+        //500 - Internal server error
+        return res.status(500).send('An error occurred');
+      } else if (results.length === 0) {
+          //404 - User not found
+        return res.status(404).send('User not found');
+      } else {
+        res.json(results[0]);
+      }
+    });
+  });
 });
+
+//POST = create
+router.post('/', (req, res) => {
+  // Extract user data from the request body
+  const { name, username, email, phone,website } = req.body;
+
+  // Connect to the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error connecting to database:', err);
+      //500 - Internal server error
+      return res.status(500).send('An error occurred');
+    }
+
+    // Prepare and execute the SQL query
+    const query = 'INSERT INTO users (name, username, email, phone, website) VALUES (?, ?, ?, ?, ?)';
+    connection.query(query, [ name, username, email, phone, website], (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error('Error executing query:', err);
+      //500 - Internal server error
+        return res.status(500).send('An error occurred');
+      } else {
+      //201 - User created successfully
+        res.status(201).json({ message: 'User created successfully' });
+      }
+    });
+  });
+});
+
+
+//PUT = update
+router.put('/', (req, res) => {
+  // Retrieve user ID and updated data from request parameters and body
+  const userId = req.params.id;
+  const { name, email } = req.body;
+
+  // Connect to the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error connecting to database:', err);
+              //500 - Internal server error
+      return res.status(500).send('An error occurred');
+    }
+
+    // Prepare and execute the SQL query
+    const query = 'UPDATE users SET name = ?, email = ? WHERE id = ?';
+    connection.query(query, [name, email, userId], (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error('Error executing query:', err);
+                //500 - Internal server error
+        return res.status(500).send('An error occurred');
+      } else if (results.affectedRows === 0) {
+          //404 - User not found
+        return res.status(404).send('User not found');
+      } else {
+        res.json({ message: 'User updated successfully' });
+      }
+    });
+  });
+});
+
+//Delete
+router.delete('/', (req, res) => {
+  // Retrieve user ID from request parameters
+  const userId = req.params.id;
+
+  // Connect to the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error connecting to database:', err);
+          //500 - Internal server error
+
+      return res.status(500).send('An error occurred');
+    }
+
+    // Prepare and execute the SQL query
+    const query = 'DELETE FROM users WHERE id = ?';
+    connection.query(query, [userId], (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error('Error executing query:', err);
+                //500 - Internal server error
+        return res.status(500).send('An error occurred');
+      } else if (results.affectedRows === 0) {
+          //404 - User not found
+        return res.status(404).send('User not found');
+      } else {
+        res.json({ message: 'User deleted successfully' });
+      }
+    });
+  });
+});
+
+
 
 module.exports = router;

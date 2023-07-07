@@ -10,6 +10,7 @@ const commentsRoutes = require("./routes/comments");
 const photosRoutes = require("./routes/photos");
 const albomsRoutes = require("./routes/alboms");
 const todosRoutes = require("./routes/todos");
+const passwordsRoutes = require("./routes/passwords");
 
 app.use(cors());
 
@@ -20,6 +21,7 @@ app.use("/api/comments", commentsRoutes);
 app.use("/api/photos", photosRoutes);
 app.use("/api/alboms", albomsRoutes);
 app.use("/api/todos", todosRoutes);
+app.use("/api/login", passwordsRoutes);
 
 app.listen(3500, () => {
   console.log("server run");
