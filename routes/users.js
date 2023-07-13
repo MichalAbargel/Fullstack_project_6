@@ -72,7 +72,7 @@ router.get('/:id', (req, res) => {
 //POST = create
 router.post('/', (req, res) => {
   // Extract user data from the request body
-  const { name, username, email, phone, website } = req.body;
+  const { name, username, email, phone,website } = req.body;
 
   // Connect to the database
   db.getConnection((err, connection) => {
