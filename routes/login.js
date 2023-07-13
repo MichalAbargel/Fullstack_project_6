@@ -10,13 +10,13 @@ router.use(bodyParser.json());
 router.post('/', (req, res) => {
     const { password, username  } = req.body;
   
+
     // Check the credentials against the database
     db.getConnection((err, connection) => {
       if (err) {
         console.error('Error connecting to database:', err);
         return res.status(500).send('An error occurred');
       }
-  
       const query = 'SELECT * FROM passwords WHERE username = ? AND password = ?';
       connection.query(query, [username, password], (err, results) => {
         connection.release(); // Release the connection
