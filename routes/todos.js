@@ -56,7 +56,8 @@ router.post("/", (req, res) => {
     }
 
     // Prepare and execute the SQL query
-    const query = "INSERT INTO todos (userId, title, completed) VALUES (?, ?)";
+    const query =
+      "INSERT INTO todos (userId, title, completed) VALUES (?, ?, ?)";
     connection.query(query, [userId, title, completed], (err, results) => {
       connection.release();
 

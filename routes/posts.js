@@ -104,11 +104,9 @@ router.get("/:userid/:postid", async (req, res) => {
 
 // POST add post
 router.post("/", (req, res) => {
-  console.log("handle POST req in posts");
-
   console.log("handle post req");
-  console.log(req.body);
   const { userId, title, body } = req.body;
+  console.log(userId, title, body);
 
   // Connect to the database
   db.getConnection((err, connection) => {
@@ -119,7 +117,7 @@ router.post("/", (req, res) => {
     }
 
     // Prepare and execute the SQL query
-    const query = "INSERT INTO posts (userId, title, body) VALUES (?, ?)";
+    const query = "INSERT INTO posts (userId, title, body) VALUES (?, ?, ?)";
     connection.query(query, [userId, title, body], (err, results) => {
       connection.release();
 
@@ -171,11 +169,12 @@ router.put("/", (req, res) => {
 });
 
 //Delete post
-router.delete("/", (req, res) => {
+router.delete("/:postid", (req, res) => {
   console.log("handle DELTET req in posts");
 
   // Retrieve user ID from request parameters
-  const postId = req.params.id;
+  const postId = req.params.postid;
+  console.log(postId);
 
   // Connect to the database
   db.getConnection((err, connection) => {

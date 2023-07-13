@@ -6,10 +6,10 @@ const bodyParser = require("body-parser");
 router.use(bodyParser.json());
 
 // GET comments
-router.get("/:userid/:postid", async (req, res) => {
+router.get("/:postid", async (req, res) => {
   console.log("handle GET req in comments");
 
-  // Retrieve user ID from request parameters
+  // Retrieve user ID and post id from request parameters
   const postId = req.params.postid;
 
   // Connect to the database
@@ -33,6 +33,8 @@ router.get("/:userid/:postid", async (req, res) => {
         //404 - User not found
         return res.status(404).send("User not found");
       } else {
+        console.log("results:");
+        console.log(results);
         res.status(200).json(results);
       }
     });
@@ -56,7 +58,7 @@ router.post("/", (req, res) => {
 
     // Prepare and execute the SQL query
     const query =
-      "INSERT INTO comments (postId, name, email, body) VALUES (?, ?)";
+      "INSERT INTO comments (postId, name, email, body) VALUES (?, ?, ?, ?)";
     connection.query(query, [postId, name, email, body], (err, results) => {
       connection.release();
 

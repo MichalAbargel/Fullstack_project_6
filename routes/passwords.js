@@ -1,48 +1,51 @@
 const express = require("express");
 const router = express.Router();
-const db = require('../database/db');
+const db = require("../database/db");
 
 const bodyParser = require("body-parser");
 router.use(bodyParser.json());
 
-
 // POST login
-router.post('/', (req, res) => {
-    const { password, username  } = req.body;
-  
-    // Check the credentials against the database
-    db.getConnection((err, connection) => {
+router.post("/", (req, res) => {
+  const { password, username } = req.body;
+
+  // Check the credentials against the database
+  db.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error connecting to database:", err);
+      return res.status(500).send("An error occurred");
+    }
+
+    const query = "SELECT * FROM passwords WHERE username = ? AND password = ?";
+    connection.query(query, [username, password], (err, results) => {
+      connection.release(); // Release the connection
+
       if (err) {
-        console.error('Error connecting to database:', err);
-        return res.status(500).send('An error occurred');
-      }
-  
-      const query = 'SELECT * FROM passwords WHERE username = ? AND password = ?';
-      connection.query(query, [username, password], (err, results) => {
-        connection.release(); // Release the connection
-  
-        if (err) {
-          console.error('Error executing query:', err);
-          return res.status(500).send('An error occurred');
-        } else if (results.length === 0) {
-          return res.status(401).send('Invalid username or password');
-        } else {
-          // Successful login
-          console.log('Logged in successfully');
-          connection.query("SELECT * FROM users WHERE username = ?", username, (err, results)=>{
-            if(err)
-            {
-                console.error('Error executing query:', err);
-                return res.status(500).send('An error occurred');
-            }else if (results.length === 0) {
-                return res.status(401).send('Invalid username or password');
-              } else {
-                res.json(results[0]);
+        console.error("Error executing query:", err);
+        return res.status(500).send("An error occurred");
+      } else if (results.length === 0) {
+        return res.status(401).send("Invalid username or password");
+      } else {
+        // Successful login
+        console.log("Logged in successfully");
+        connection.query(
+          "SELECT * FROM users WHERE username = ?",
+          username,
+          (err, results) => {
+            if (err) {
+              console.error("Error executing query:", err);
+              return res.status(500).send("An error occurred");
+            } else if (results.length === 0) {
+              console.log("Invalid username or password");
+              return res.status(401).send("Invalid username or password");
+            } else {
+              res.json(results[0]);
             }
-          });
-        }
-      });
+          }
+        );
+      }
     });
+  });
 });
 
 // POST user
