@@ -110,11 +110,11 @@ router.put("/", (req, res) => {
 });
 
 //Delete comment
-router.delete("/", (req, res) => {
+router.delete("/:postid", (req, res) => {
   console.log("handle DELETE req in comments");
 
   // Retrieve user ID from request parameters
-  const commentId = req.params.id;
+  const commentId = req.params.postid;
 
   // Connect to the database
   db.getConnection((err, connection) => {

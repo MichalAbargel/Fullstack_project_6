@@ -185,6 +185,22 @@ router.delete("/:postid", (req, res) => {
       return res.status(500).send("An error occurred");
     }
 
+    //need to delete all comments related to post
+    const queryDeleteComment = "DELETE FROM comments WHERE id = ?";
+    connection.query(queryDeleteComment, [postId], (err, results) => {
+      connection.release();
+      if (err) {
+        console.error("Error executing query:", err);
+        //500 - Internal server error
+        return res.status(500).send("An error occurred");
+      } else if (results.affectedRows === 0) {
+        //404 - User not found
+        return res.status(404).send("User not found");
+      } else {
+        res.json({ message: "comments deleted successfully" });
+      }
+    });
+
     // Prepare and execute the SQL query
     const query = "DELETE FROM posts WHERE id = ?";
     connection.query(query, [postId], (err, results) => {
@@ -198,7 +214,7 @@ router.delete("/:postid", (req, res) => {
         //404 - User not found
         return res.status(404).send("User not found");
       } else {
-        res.json({ message: "User deleted successfully" });
+        res.json({ message: "post deleted successfully" });
       }
     });
   });
