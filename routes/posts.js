@@ -134,11 +134,11 @@ router.post("/", (req, res) => {
 });
 
 //PUT = update post
-router.put("/", (req, res) => {
+router.put("/:postid", (req, res) => {
   console.log("handle PUT req in posts");
 
   // Retrieve user ID and updated data from request parameters and body
-  const postId = req.params.id;
+  const postId = req.params.postid;
   const { title, body } = req.body;
 
   // Connect to the database
@@ -186,36 +186,39 @@ router.delete("/:postid", (req, res) => {
     }
 
     //need to delete all comments related to post
-    const queryDeleteComment = "DELETE FROM comments WHERE id = ?";
-    connection.query(queryDeleteComment, [postId], (err, results) => {
-      connection.release();
+    const queryDeleteComment = "DELETE FROM comments WHERE postId = ?";
+    connection.query(queryDeleteComment, [postId], (err, commentResults) => {
       if (err) {
         console.error("Error executing query:", err);
-        //500 - Internal server error
-        return res.status(500).send("An error occurred");
-      } else if (results.affectedRows === 0) {
-        //404 - User not found
-        return res.status(404).send("User not found");
-      } else {
-        res.json({ message: "comments deleted successfully" });
+        // 500 - Internal server error
+        return res
+          .status(500)
+          .send("An error occurred while deleting comments");
       }
-    });
 
-    // Prepare and execute the SQL query
-    const query = "DELETE FROM posts WHERE id = ?";
-    connection.query(query, [postId], (err, results) => {
-      connection.release();
+      // Check if any comments were deleted
+      const numDeletedComments = commentResults.affectedRows;
+      console.log(numDeletedComments);
+      // Comments were deleted, now delete the post
+      const queryDeletePost = "DELETE FROM posts WHERE id = ?";
+      connection.query(queryDeletePost, [postId], (err, postResults) => {
+        connection.release();
 
-      if (err) {
-        console.error("Error executing query:", err);
-        //500 - Internal server error
-        return res.status(500).send("An error occurred");
-      } else if (results.affectedRows === 0) {
-        //404 - User not found
-        return res.status(404).send("User not found");
-      } else {
-        res.json({ message: "post deleted successfully" });
-      }
+        if (err) {
+          console.error("Error executing query:", err);
+          // 500 - Internal server error
+          return res
+            .status(500)
+            .send("An error occurred while deleting the post");
+        } else if (postResults.affectedRows === 0) {
+          // 404 - Post not found
+          return res.status(404).send("Post not found");
+        } else {
+          res.json({
+            message: "Post and associated comments deleted successfully",
+          });
+        }
+      });
     });
   });
 });

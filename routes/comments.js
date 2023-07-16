@@ -75,12 +75,12 @@ router.post("/", (req, res) => {
 });
 
 //PUT = update comment
-router.put("/", (req, res) => {
+router.put("/:commentId", (req, res) => {
   console.log("handle PUT req in comments");
 
   // Retrieve user ID and updated data from request parameters and body
-  const commentId = req.params.id;
-  const { body } = req.body;
+  const commentId = req.params.commentId;
+  const { name, body } = req.body;
 
   // Connect to the database
   db.getConnection((err, connection) => {
@@ -91,8 +91,8 @@ router.put("/", (req, res) => {
     }
 
     // Prepare and execute the SQL query
-    const query = "UPDATE comments SET body = ? WHERE id = ?";
-    connection.query(query, [body, commentId], (err, results) => {
+    const query = "UPDATE comments SET name = ?, body = ? WHERE id = ?";
+    connection.query(query, [name, body, commentId], (err, results) => {
       connection.release();
 
       if (err) {
