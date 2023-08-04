@@ -7,108 +7,128 @@ router.use(bodyParser.json());
 
 // POST register (add user)
 router.post("/", (req, res) => {
-  const { name, email, phone, website, username, password } = req.body;
+  const { name, email, phone, address, username, password } = req.body;
 
-  // Check if username already exists
-  db.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error connecting to database:", err);
-      return res.status(500).send("An error occurred");
+  try {
+    const check = isUserWithEmailExists(email);
+    if (check) {
+      // Email is already exists
+      console.log("\n" + results.length + "\n" + results[0] + "\n");
+      return res.status(409).send("Email is already taken.");
     }
-
-    connection.query(
-      "SELECT * FROM users WHERE username = ?",
-      username,
-      (err, results) => {
-        if (err) {
-          console.error("Error executing query:", err);
-          return res.status(500).send("An error occurred");
-        } else if (results.length > 0) {
-          // Username already exists
-          console.log("\n" + results.length + "\n" + results[0] + "\n");
-          return res.status(409).send("Username is already taken.");
-        } else {
-          // Add a new user to the database
-          addUser(name, email, phone, website, username, (err, userId) => {
-            if (err) {
-              console.error("Error adding user:", err);
-              return res.status(500).send("An error occurred");
-            }
-            console.log("\nAdd User\n");
-            // Username does not exist, add the user's password
-            addPassword(username, password, (err) => {
-              if (err) {
-                console.error("Error adding password:", err);
-                // Delete user
-                return res.status(500).send("An error occurred");
-              }
-              console.log("\nAdd Passwords\n");
-
-              // Get the user details from the database
-              getDetails(username, (err, userData) => {
-                if (err) {
-                  console.error("Error getting user details:", err);
-                  return res.status(500).send("An error occurred");
-                }
-                console.log("\nGet Details\n"+userData);
-                return res.status(201).json(userData);
-              });
-            });
-          });
-        }
+    check = isPasswordWithUsernameExists(username);
+    if (check) {
+      // Username is already exists
+      console.log("\n" + results.length + "\n" + results[0] + "\n");
+      return res.status(409).send("Username is already taken.");
+    }
+    // Add a new user to the database
+    const insertUser = addUser(name, email, phone, address);
+    // Username does not exist, add the user's password
+    if (insertUser) {
+      if (addPassword(insertUser.id, username, password)) {
+        console.log("\nAdd user and password.\n" + insertUser);
+        return res.status(201).json(userData);
       }
-    );
-  });
+      //delete the insert date?
+    }
+  } catch (err) {
+    console.error("Error executing query:", err);
+    return res.status(500).send("An error occurred");
+  }
 });
 
+//check if user with this email is exist
+async function isUserWithEmailExists(email) {
+  try {
+    const connection = await db.getConnection();
+    const query = "SELECT COUNT(*) as count FROM users WHERE email = ?";
+    const result = await connection.query(query, [email]);
+    connection.release();
+
+    const count = result[0].count;
+    return count > 0;
+  } catch (err) {
+    console.error("Error checking user existence:", err);
+    throw err;
+  }
+}
+
+//check if user with this email is exist
+async function isPasswordWithUsernameExists(username) {
+  try {
+    const connection = await db.getConnection();
+    const query = "SELECT COUNT(*) as count FROM passwords WHERE username = ?";
+    const result = await connection.query(query, [username]);
+    connection.release();
+
+    const count = result[0].count;
+    return count > 0;
+  } catch (err) {
+    console.error("Error checking username existence:", err);
+    throw err;
+  }
+}
+
 // Add a new user to the database
-const addUser = (name, email, phone, website, username, callback) => {
-  db.query(
-    "INSERT INTO users (name, email, phone, website, username, api_key) VALUES (?, ?, ?, ?, ?, ?)",
-    [name, email, phone, website, username, generateUniqueKey()],
-    (err, result) => {
-      if (err) {
-        return callback(err, null);
-      }
+async function addUser(name, email, phone, address) {
+  try {
+    //  const apiKey = generateUniqueKey();
+    const connection = await db.getConnection();
+    const query =
+      "INSERT INTO users (name.firstname, name.lastname, email, phone, address.city, address.street,address.number, address.zipcode,address.geolocation.lat,address.geolocation.long)VALUES (?, ?, ?, ?, ?, ?,?,?,?,?)";
+    const result = await connection.query(query, [
+      name.firstname,
+      name.lastname,
+      email,
+      phone,
+      address.city,
+      address.street,
+      address.number,
+      address.zipcode,
+      address.geolocation.lat,
+      address.geolocation.long,
+    ]);
+    connection.release();
+    console.log("success addition user.");
+    return result;
+  } catch (err) {
+    console.error("Error adding user:", err);
+    throw err;
+  }
+}
 
-      const userId = result.insertId;
-      console.log("\n id: " + userId + "\n");
-      callback(null, userId);
+async function addPassword(userId, username, password) {
+  try {
+    const connection = await db.getConnection();
+    const query =
+      "INSERT INTO passwords (userId,username, password) VALUES (?, ?,?)";
+    await connection.query(query, [userId, username, password]);
+    connection.release();
+    return true;
+  } catch (err) {
+    console.error("Error adding password:", err);
+    throw err;
+  }
+}
+
+async function getDetails(username) {
+  try {
+    const connection = await db.getConnection();
+    const query = "SELECT * FROM users WHERE username = ?";
+    const results = await connection.query(query, username);
+    connection.release();
+
+    if (results.length === 0) {
+      throw new Error("Invalid username");
     }
-  );
-};
 
-// Add a new password to the database
-const addPassword = (username, password, callback) => {
-  db.query(
-    "INSERT INTO passwords (username, password) VALUES (?, ?)",
-    [username, password],
-    (err, result) => {
-      if (err) {
-        return callback(err);
-      }
-
-      callback(null, true);
-    }
-  );
-};
-
-// Get user details from the database
-const getDetails = (username, callback) => {
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    username,
-    (err, results) => {
-      if (err) {
-        return callback(err, null);
-      } else if (results.length === 0) {
-        return callback(Error("Invalid username"), null);
-      } else {
-        callback(null, results[0]);
-      }
-    }
-  );
-};
+    return results[0];
+  } catch (err) {
+    console.error("Error getting user details:", err);
+    throw err;
+  }
+}
 
 // Create API key
 const generateUniqueKey = () => {

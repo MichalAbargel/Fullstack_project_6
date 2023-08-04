@@ -1,27 +1,23 @@
 const express = require("express");
-const cors = require("cors");
+const router = express.Router();
 
 const app = express();
 
 // Require the route files
-const usersRoutes = require("./routes/users");
-const postsRoutes = require("./routes/posts");
-const commentsRoutes = require("./routes/comments");
-const photosRoutes = require("./routes/photos");
-const albomsRoutes = require("./routes/alboms");
-const todosRoutes = require("./routes/todos");
-const loginRoutes = require("./routes/login");
-const registersRoutes = require("./routes/register");
+const homeRoutes = require("./routes/Home");
+const usersRoutes = require("./routes/Users");
+const productsRoutes = require("./routes/Products");
+const cartsRoutes = require("./routes/Carts");
+const loginRoutes = require("./routes/Login");
+const registersRoutes = require("./routes/Register");
 
 app.use(cors());
 
 // use the route files
+app.use("/api/home", homeRoutes);
 app.use("/api/users", usersRoutes);
-app.use("/api/posts", postsRoutes);
-app.use("/api/comments", commentsRoutes);
-app.use("/api/photos", photosRoutes);
-app.use("/api/alboms", albomsRoutes);
-app.use("/api/todos", todosRoutes);
+app.use("/api/products", productsRoutes);
+app.use("/api/carts", cartsRoutes);
 app.use("/api/login", loginRoutes);
 app.use("/api/register", registersRoutes);
 

@@ -27,9 +27,11 @@ router.post("/", (req, res) => {
       } else {
         // Successful login
         console.log("Logged in successfully");
+        const id = results[0].userId; // Access the 'id' property of the first element
+        console.log("result: "+id);
         connection.query(
-          "SELECT * FROM users WHERE username = ?",
-          username,
+          "SELECT * FROM users WHERE id = ?",
+          id,
           (err, results) => {
             if (err) {
               console.error("Error executing query:", err);
