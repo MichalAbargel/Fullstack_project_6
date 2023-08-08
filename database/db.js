@@ -6,3 +6,4 @@ let db = mysql.createPool({
     port: 3306,
     database: "mystore",
   });
+module.exports = db;

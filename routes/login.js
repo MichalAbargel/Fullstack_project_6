@@ -29,6 +29,7 @@ router.post("/", (req, res) => {
         console.log("Logged in successfully");
         const id = results[0].userId; // Access the 'id' property of the first element
         console.log("result: "+id);
+        console.log(results[0]);
         connection.query(
           "SELECT * FROM users WHERE id = ?",
           id,
@@ -40,6 +41,7 @@ router.post("/", (req, res) => {
               return res.status(401).send("Invalid username or password");
             } else {
               res.json(results[0]);
+              console.log(results[0]);
             }
           }
         );
